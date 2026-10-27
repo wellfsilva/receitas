@@ -16,7 +16,6 @@
     #header-title{
       margin: 0 auto;
     }
-    
   </style>
 
   <script>
@@ -59,15 +58,9 @@
       </h1>
 
       <!-- Botão Adicionar (+) (Visível apenas na Home) -->
-      <button id="btn-add" onclick="navigateTo('form')" class="bg-brand-500 hover:bg-brand-600 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg shadow-brand-500/30 transition-all hover:scale-105 active:scale-95">
+      <button id="btn-add" onclick="openNewForm()" class="bg-brand-500 hover:bg-brand-600 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg shadow-brand-500/30 transition-all hover:scale-105 active:scale-95">
         <i class="fa-solid fa-plus text-lg"></i>
       </button>
-
-      <!-- Botão do Guia de Integração Apps Script -->
-<!--       <button onclick="toggleScriptModal(true)" class="fixed bottom-4 right-4 bg-slate-900 text-white text-xs px-3 py-2 rounded-full shadow-xl flex items-center gap-2 hover:bg-slate-800 z-40 transition-all">
-        <i class="fa-solid fa-code text-brand-500"></i>
-        <span>Google Sheets Sync</span>
-      </button> -->
     </div>
   </header>
 
@@ -92,12 +85,11 @@
       </div>
 
       <!-- Banner Informativo da Origem dos Dados -->
-      <div id="api-status-banner" class="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center justify-between text-xs text-amber-800" style="display:none;">
+      <div id="api-status-banner" class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-center justify-between text-xs text-emerald-800">
         <div class="flex items-center gap-2">
-          <i class="fa-solid fa-database text-amber-600"></i>
-          <span id="data-source-text">Modo Demonstrativo (Dados locais). Configure a URL do Apps Script para sincronizar com sua planilha.</span>
+          <i class="fa-solid fa-database text-emerald-600"></i>
+          <span id="data-source-text">Conectado ao Google Sheets.</span>
         </div>
-        <button onclick="toggleScriptModal(true)" class="underline font-semibold hover:text-amber-900">Configurar</button>
       </div>
 
       <!-- Seção de Sugestões Aleatórias / Lista de Receitas -->
@@ -126,10 +118,13 @@
       </div>
     </section>
 
-    <!-- ==================== TELA 2: CADASTRO DE RECEITA ==================== -->
+    <!-- ==================== TELA 2: CADASTRO / EDIÇÃO DE RECEITA ==================== -->
     <section id="view-form" class="hidden bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
       <form id="recipe-form" onsubmit="saveRecipe(event)" class="space-y-6">
         
+        <!-- Campo Oculto para ID (Usado na Edição) -->
+        <input type="hidden" id="form-id" value="">
+
         <!-- Nome da Receita -->
         <div>
           <label class="block text-sm font-semibold text-slate-700 mb-1">Nome da Receita *</label>
@@ -217,13 +212,25 @@
         
         <!-- Header da Receita -->
         <div class="space-y-3 pb-4 border-b border-slate-100">
-          <div class="flex flex-wrap items-center gap-2">
-            <!-- Badges -->
-            <span id="detail-badge-type" class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-brand-100 text-brand-700"></span>
-            
-            <span id="detail-badge-preheat" class="hidden px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 flex items-center gap-1.5">
-              <i class="fa-solid fa-fire text-amber-600"></i> Preaquecer Forno
-            </span>
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex flex-wrap items-center gap-2">
+              <!-- Badges -->
+              <span id="detail-badge-type" class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-brand-100 text-brand-700"></span>
+              
+              <span id="detail-badge-preheat" class="hidden px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 flex items-center gap-1.5">
+                <i class="fa-solid fa-fire text-amber-600"></i> Preaquecer Forno
+              </span>
+            </div>
+
+            <!-- Botões de Ação: Editar e Excluir -->
+            <div class="flex items-center gap-2">
+              <button onclick="editCurrentRecipe()" class="px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-all flex items-center gap-1.5">
+                <i class="fa-solid fa-pen-to-square text-brand-600"></i> Editar
+              </button>
+              <button onclick="deleteCurrentRecipe()" class="px-3 py-1.5 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-all flex items-center gap-1.5">
+                <i class="fa-solid fa-trash-can"></i> Excluir
+              </button>
+            </div>
           </div>
 
           <h1 id="detail-title" class="text-2xl sm:text-3xl font-extrabold text-slate-900 leading-tight"></h1>
@@ -260,101 +267,6 @@
 
   </main>
 
-  <!-- ==================== MODAL DE GUIA E SCRIPT DO GOOGLE APPS SCRIPT ==================== -->
-  <div id="script-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
-      
-      <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-        <h3 class="font-bold text-slate-800 flex items-center gap-2">
-          <i class="fa-brands fa-google text-emerald-600"></i> Conectar com Google Planilhas
-        </h3>
-        <button onclick="toggleScriptModal(false)" class="text-slate-400 hover:text-slate-600 p-1">
-          <i class="fa-solid fa-xmark text-lg"></i>
-        </button>
-      </div>
-
-      <div class="p-6 overflow-y-auto space-y-4 text-sm text-slate-600">
-        
-        <!-- Configuração da URL da Web App -->
-        <div class="bg-brand-50 p-4 rounded-xl border border-brand-100 space-y-2">
-          <label class="block text-xs font-bold text-brand-800 uppercase tracking-wider">URL do Apps Script Web App</label>
-          <div class="flex gap-2">
-            <input type="text" id="script-url-input" placeholder="https://script.google.com/macros/s/.../exec" class="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-xs font-mono outline-none focus:ring-2 focus:ring-brand-500">
-            <button onclick="saveScriptUrl()" class="px-4 py-2 bg-brand-600 text-white rounded-lg text-xs font-bold hover:bg-brand-700">Salvar</button>
-          </div>
-          <p class="text-[11px] text-brand-700">Deixe em branco para continuar usando o modo de testes local.</p>
-        </div>
-
-        <h4 class="font-bold text-slate-800 text-base border-b pb-1">Passo a Passo de Configuração:</h4>
-        <ol class="list-decimal pl-5 space-y-2 text-xs leading-relaxed">
-          <li>Crie uma nova <strong>Planilha do Google</strong>. Na primeira linha (cabeçalho), escreva: <br><code class="bg-slate-100 px-1 py-0.5 rounded border text-slate-800 font-mono">id | nome | tipo | preaquecer | ingredientes | preparo | link</code></li>
-          <li>No menu da planilha, acesse: <strong>Extensões &gt; Apps Script</strong>.</li>
-          <li>Apague todo o código existente lá e cole o código abaixo.</li>
-          <li>Clique em <strong>Implantar &gt; Nova implantação</strong>.</li>
-          <li>Escolha o tipo <strong>App da Web</strong>. Em <em>Quem pode acessar</em>, selecione <strong>Qualquer pessoa</strong> (necessário para a requisição via navegador).</li>
-          <li>Copie a <strong>URL do app da Web</strong> gerada e cole no campo acima!</li>
-        </ol>
-
-        <div class="relative">
-          <div class="flex items-center justify-between bg-slate-800 text-slate-200 px-4 py-2 rounded-t-xl text-xs font-mono">
-            <span>Code.gs</span>
-            <button onclick="copyAppsScriptCode()" class="text-xs text-brand-400 hover:underline"><i class="fa-regular fa-copy"></i> Copiar Código</button>
-          </div>
-          <pre class="bg-slate-900 text-slate-100 p-4 rounded-b-xl overflow-x-auto text-xs font-mono leading-normal" id="script-code-block">
-function doGet() {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  var data = sheet.getDataRange().getValues();
-  var recipes = [];
-  
-  // Pula a linha do cabeçalho
-  for (var i = 1; i < data.length; i++) {
-    if(!data[i][0]) continue;
-    recipes.push({
-      id: data[i][0],
-      nome: data[i][1],
-      tipo: data[i][2],
-      preaquecer: data[i][3] === true || data[i][3] === "TRUE",
-      ingredientes: JSON.parse(data[i][4] || "[]"),
-      preparo: data[i][5],
-      link: data[i][6]
-    });
-  }
-  
-  return ContentService.createTextOutput(JSON.stringify(recipes))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
-function doPost(e) {
-  try {
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-    var payload = JSON.parse(e.postData.contents);
-    
-    var newId = "rec_" + new Date().getTime();
-    
-    sheet.appendRow([
-      newId,
-      payload.nome,
-      payload.tipo,
-      payload.preaquecer,
-      JSON.stringify(payload.ingredientes),
-      payload.preparo,
-      payload.link
-    ]);
-    
-    return ContentService.createTextOutput(JSON.stringify({ status: "success", id: newId }))
-      .setMimeType(ContentService.MimeType.JSON);
-  } catch(err) {
-    return ContentService.createTextOutput(JSON.stringify({ status: "error", message: err.toString() }))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-}
-          </pre>
-        </div>
-
-      </div>
-    </div>
-  </div>
-
   <!-- Toast Notification -->
   <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-5 py-3 rounded-full shadow-2xl z-50 text-xs font-semibold flex items-center gap-2 transition-all duration-300 opacity-0 pointer-events-none translate-y-4">
     <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
@@ -363,127 +275,27 @@ function doPost(e) {
 
   <!-- SCRIPT DE LÓGICA E ESTADO DA APLICAÇÃO -->
   <script>
-    // --- ESTADO INICIAL & MOCK DATA ---
-    const MOCK_RECIPES = [
-      {
-        id: "1",
-        nome: "Bolo de Cenoura com Chocolate",
-        tipo: "Doce",
-        preaquecer: true,
-        ingredientes: [
-          { nome: "Cenouras médias picadas", qtd: "3 unidades" },
-          { nome: "Ovos", qtd: "3 unidades" },
-          { nome: "Óleo de soja", qtd: "1/2 xícara" },
-          { nome: "Açúcar", qtd: "2 xícaras" },
-          { nome: "Farinha de trigo", qtd: "2.5 xícaras" },
-          { nome: "Fermento em pó", qtd: "1 colher de sopa" }
-        ],
-        preparo: "1. Bata no liquidificador a cenoura, os ovos e o óleo até ficar homogêneo.\n2. Adicione o açúcar e bata por mais 2 minutos.\n3. Em uma tigela, misture a farinha e adicione o líquido batido.\n4. Misture delicadamente e adicione o fermento.\n5. Asse em forno preaquecido a 180°C por 40 minutos.",
-        link: "https://www.tudogostoso.com.br"
-      },
-      {
-        id: "2",
-        nome: "Torta de Frango de Liquidificador",
-        tipo: "Salgada",
-        preaquecer: true,
-        ingredientes: [
-          { nome: "Leite", qtd: "2 xícaras" },
-          { nome: "Óleo", qtd: "1/2 xícara" },
-          { nome: "Ovos", qtd: "3 unidades" },
-          { nome: "Farinha de trigo", qtd: "2 xícaras" },
-          { nome: "Frango desfiado temperado", qtd: "400g" }
-        ],
-        preparo: "1. Bate todos os ingredientes da massa no liquidificador.\n2. Despeje metade da massa na assadeira.\n3. Coloque o recheio de frango e cubra com o restante da massa.\n4. Leve ao forno preaquecido por cerca de 35 minutos.",
-        link: ""
-      },
-      {
-        id: "3",
-        nome: "Mousse de Limão Rápido",
-        tipo: "Doce",
-        preaquecer: false,
-        ingredientes: [
-          { nome: "Leite condensado", qtd: "1 lata" },
-          { nome: "Creme de leite", qtd: "1 caixa" },
-          { nome: "Suco de limão", qtd: "1/2 xícara" }
-        ],
-        preparo: "1. Bate no liquidificador o leite condensado e o creme de leite.\n2. Acrescente o suco de limão aos poucos sem parar de bater.\n3. Despeje em taças e leve à geladeira por 2 horas.",
-        link: ""
-      },
-      {
-        id: "4",
-        nome: "Pão de Queijo Mineiro",
-        tipo: "Salgada",
-        preaquecer: true,
-        ingredientes: [
-          { nome: "Polvilho azedo", qtd: "500g" },
-          { nome: "Queijo meia cura ralado", qtd: "300g" },
-          { nome: "Leite", qtd: "1 xícara" },
-          { nome: "Óleo", qtd: "1/2 xícara" },
-          { nome: "Ovos", qtd: "2 a 3 unidades" }
-        ],
-        preparo: "1. Ferva o leite com o óleo e sal.\n2. Escalde o polvilho com essa mistura.\n3. Espere esfriar, adicione os ovos e o queijo e sove bem.\n4. Faça bolinhas e asse em forno médio preaquecido.",
-        link: ""
-      },
-      {
-        id: "5",
-        nome: "Panqueca Americana",
-        tipo: "Doce",
-        preaquecer: false,
-        ingredientes: [
-          { nome: "Farinha de trigo", qtd: "1.5 xícaras" },
-          { nome: "Açúcar", qtd: "2 colheres de sopa" },
-          { nome: "Leite", qtd: "1 xícara" },
-          { nome: "Ovo", qtd: "1 unidade" },
-          { nome: "Manteiga derretida", qtd: "2 colheres de sopa" }
-        ],
-        preparo: "1. Misture os secos em um recipiente.\n2. Adicione os líquidos e misture com um fouet sem bater demais.\n3. Aqueca uma frigideira antiaderente e coloque pequenas porções da massa.\n4. Vire quando fizer bolinhas.",
-        link: ""
-      },
-      {
-        id: "6",
-        nome: "Guacamole Tradicional",
-        tipo: "Salgada",
-        preaquecer: false,
-        ingredientes: [
-          { nome: "Abacate maduro", qtd: "1 unidade" },
-          { nome: "Tomate sem semente picado", qtd: "1 unidade" },
-          { nome: "Cebola roxa picada", qtd: "1/2 unidade" },
-          { nome: "Suco de limão", qtd: "1 unidade" },
-          { nome: "Coentro e sal", qtd: "A gosto" }
-        ],
-        preparo: "1. Amasse o abacate com um garfo em uma tigela.\n2. Adicione os demais ingredientes picados.\n3. Tempere com limão, sal e coentro.\n4. Sirva com tortilhas.",
-        link: ""
-      }
-    ];
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzsegicwuOmHySwi9ZgjfHuMwSlsLnOWI7MhjTczbJhu4SejRGPFgG4JJ9lZiGrVhSL/exec";
 
     let recipesState = [];
-    let appsScriptUrl = localStorage.getItem('appsScriptUrl') || '';
+    let currentDetailRecipeId = null;
 
     // --- NA INICIALIZAÇÃO DA PÁGINA ---
     window.onload = function() {
-      // Atualiza input da URL se houver
-      if (appsScriptUrl) {
-        document.getElementById('script-url-input').value = appsScriptUrl;
-        updateDataSourceBanner(true);
-      } else {
-        updateDataSourceBanner(false);
-      }
-
       fetchRecipes();
-      
-      // Adiciona linha inicial de ingrediente no formulário
-      addIngredientRow();
-      addIngredientRow();
     };
 
-    // --- GERENCIAMENTO DE DADOS (LOCAL OU WEB APP) ---
+    // --- GERENCIAMENTO DE DADOS (WEB APP OU LOCAL FALLBACK) ---
     async function fetchRecipes() {
-      if (appsScriptUrl) {
+      if (APPS_SCRIPT_URL && APPS_SCRIPT_URL.trim() !== "") {
         try {
           showToast('Carregando receitas do Google Sheets...', 'info');
-          const response = await fetch(appsScriptUrl);
+          const response = await fetch(APPS_SCRIPT_URL);
           const data = await response.json();
           recipesState = data;
+          
+          document.getElementById('data-source-text').innerText = "Sincronizado com o Google Sheets.";
+          document.getElementById('api-status-banner').className = "bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-center justify-between text-xs text-emerald-800";
           showToast('Receitas sincronizadas com sucesso!');
         } catch (err) {
           console.error("Erro ao buscar dados do Apps Script:", err);
@@ -498,12 +310,14 @@ function doPost(e) {
     }
 
     function loadLocalFallback() {
+      document.getElementById('data-source-text').innerText = "Modo Demonstrativo (Dados locais). Configure a URL do Apps Script para sincronizar.";
+      document.getElementById('api-status-banner').className = "bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center justify-between text-xs text-amber-800";
+      
       const stored = localStorage.getItem('local_recipes');
       if (stored) {
         recipesState = JSON.parse(stored);
       } else {
-        recipesState = [...MOCK_RECIPES];
-        localStorage.setItem('local_recipes', JSON.stringify(recipesState));
+        recipesState = [];
       }
     }
 
@@ -530,9 +344,9 @@ function doPost(e) {
         titleEl.className = "text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2 mx-auto";
         btnAdd.classList.add('hidden');
         btnBack.classList.remove('hidden');
-        resetForm();
       } 
       else if (viewName === 'details' && recipeId) {
+        currentDetailRecipeId = recipeId;
         renderRecipeDetails(recipeId);
         document.getElementById('view-details').classList.remove('hidden');
         titleEl.className = "text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2";
@@ -541,6 +355,11 @@ function doPost(e) {
       }
 
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function openNewForm() {
+      resetForm();
+      navigateTo('form');
     }
 
     // --- LÓGICA DA TELA INICIAL (BUSCA & SORTEIO) ---
@@ -553,7 +372,6 @@ function doPost(e) {
         return;
       }
 
-      // Embaralha e pega 5 receitas aleatórias
       const shuffled = [...recipesState].sort(() => 0.5 - Math.random());
       const selected = shuffled.slice(0, 5);
       renderRecipesList(selected);
@@ -599,7 +417,6 @@ function doPost(e) {
       });
     }
 
-    // Autosugestão & Busca
     function handleSearchInput(e) {
       const query = e.target.value.trim().toLowerCase();
       const suggestionsBox = document.getElementById('search-suggestions');
@@ -609,10 +426,8 @@ function doPost(e) {
       if (query.length > 0) {
         clearBtn.classList.remove('hidden');
         
-        // Filtra sugestões
         const matches = recipesState.filter(r => r.nome.toLowerCase().includes(query));
         
-        // Exibe Autocomplete
         if (matches.length > 0) {
           suggestionsBox.innerHTML = matches.slice(0, 5).map(r => `
             <div onclick="selectSearchSuggestion('${r.id}')" class="px-4 py-2.5 hover:bg-slate-50 cursor-pointer text-sm flex items-center justify-between">
@@ -625,7 +440,6 @@ function doPost(e) {
           suggestionsBox.classList.add('hidden');
         }
 
-        // Filtra lista principal
         titleEl.innerText = `Resultados da busca (${matches.length})`;
         renderRecipesList(matches);
 
@@ -646,7 +460,7 @@ function doPost(e) {
       loadRandomRecipes();
     }
 
-    // --- FORMULÁRIO DINÂMICO (CADASTRO) ---
+    // --- FORMULÁRIO DINÂMICO (CADASTRO E EDIÇÃO) ---
     function addIngredientRow(nome = '', qtd = '') {
       const container = document.getElementById('ingredients-container');
       const row = document.createElement('div');
@@ -674,9 +488,66 @@ function doPost(e) {
 
     function resetForm() {
       document.getElementById('recipe-form').reset();
+      document.getElementById('form-id').value = '';
       document.getElementById('ingredients-container').innerHTML = '';
       addIngredientRow();
       addIngredientRow();
+    }
+
+    function editCurrentRecipe() {
+      const recipe = recipesState.find(r => r.id === currentDetailRecipeId);
+      if (!recipe) return;
+
+      document.getElementById('form-id').value = recipe.id;
+      document.getElementById('form-name').value = recipe.nome;
+      
+      const radioType = document.querySelector(`input[name="recipe-type"][value="${recipe.tipo}"]`);
+      if (radioType) radioType.checked = true;
+
+      document.getElementById('form-preheat').checked = !!recipe.preaquecer;
+      document.getElementById('form-steps').value = recipe.preparo;
+      document.getElementById('form-link').value = recipe.link || '';
+
+      const container = document.getElementById('ingredients-container');
+      container.innerHTML = '';
+      if (recipe.ingredientes && recipe.ingredientes.length > 0) {
+        recipe.ingredientes.forEach(ing => addIngredientRow(ing.nome, ing.qtd));
+      } else {
+        addIngredientRow();
+      }
+
+      navigateTo('form');
+    }
+
+    async function deleteCurrentRecipe() {
+      if (!currentDetailRecipeId) return;
+      if (!confirm("Tem certeza que deseja excluir esta receita?")) return;
+
+      const recipeId = currentDetailRecipeId;
+
+      if (APPS_SCRIPT_URL && APPS_SCRIPT_URL.trim() !== "") {
+        try {
+          showToast('Excluindo da planilha...', 'info');
+          await fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify({ action: 'delete', id: recipeId })
+          });
+
+          recipesState = recipesState.filter(r => r.id !== recipeId);
+          showToast('Receita excluída com sucesso!');
+        } catch (err) {
+          console.error("Erro ao excluir no Apps Script:", err);
+          showToast('Erro ao excluir no Google Sheets.', 'error');
+          return;
+        }
+      } else {
+        recipesState = recipesState.filter(r => r.id !== recipeId);
+        localStorage.setItem('local_recipes', JSON.stringify(recipesState));
+        showToast('Receita excluída localmente!');
+      }
+
+      navigateTo('home');
     }
 
     async function saveRecipe(e) {
@@ -686,7 +557,8 @@ function doPost(e) {
       btnSave.disabled = true;
       btnSave.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Salvando...`;
 
-      // Coleta ingredientes
+      const id = document.getElementById('form-id').value.trim() || ("rec_" + new Date().getTime());
+
       const ingRows = document.querySelectorAll('.ingredient-row');
       const ingredientes = [];
       ingRows.forEach(row => {
@@ -697,8 +569,8 @@ function doPost(e) {
         }
       });
 
-      const newRecipe = {
-        id: "rec_" + new Date().getTime(),
+      const recipeData = {
+        id: id,
         nome: document.getElementById('form-name').value.trim(),
         tipo: document.querySelector('input[name="recipe-type"]:checked').value,
         preaquecer: document.getElementById('form-preheat').checked,
@@ -707,36 +579,44 @@ function doPost(e) {
         link: document.getElementById('form-link').value.trim()
       };
 
-      if (appsScriptUrl) {
+      if (APPS_SCRIPT_URL && APPS_SCRIPT_URL.trim() !== "") {
         try {
-          await fetch(appsScriptUrl, {
+          await fetch(APPS_SCRIPT_URL, {
             method: 'POST',
-            mode: 'no-cors', // Apps Script requer no-cors para chamadas diretas de cliente sem proxy CORS
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(newRecipe)
+            mode: 'no-cors',
+            body: JSON.stringify({ action: 'save', ...recipeData })
           });
 
-          // Adiciona localmente para feedback instantâneo na UI
-          recipesState.unshift(newRecipe);
-          showToast('Receita enviada para a Planilha do Google!');
+          const index = recipesState.findIndex(r => r.id === id);
+          if (index >= 0) {
+            recipesState[index] = recipeData;
+          } else {
+            recipesState.unshift(recipeData);
+          }
+          showToast('Receita salva na Planilha do Google!');
         } catch (err) {
           console.error("Erro ao salvar no Apps Script:", err);
           showToast('Erro ao salvar no Google Sheets. Salvo localmente.', 'error');
-          saveRecipeLocally(newRecipe);
+          saveRecipeLocally(recipeData);
         }
       } else {
-        saveRecipeLocally(newRecipe);
-        showToast('Receita cadastrada com sucesso!');
+        saveRecipeLocally(recipeData);
+        showToast('Receita cadastrada localmente!');
       }
 
       btnSave.disabled = false;
       btnSave.innerHTML = `<i class="fa-solid fa-check"></i> <span>Salvar Receita</span>`;
 
-      navigateTo('home');
+      navigateTo('details', id);
     }
 
     function saveRecipeLocally(recipe) {
-      recipesState.unshift(recipe);
+      const index = recipesState.findIndex(r => r.id === recipe.id);
+      if (index >= 0) {
+        recipesState[index] = recipe;
+      } else {
+        recipesState.unshift(recipe);
+      }
       localStorage.setItem('local_recipes', JSON.stringify(recipesState));
     }
 
@@ -767,7 +647,7 @@ function doPost(e) {
       ingList.innerHTML = recipe.ingredientes.map(ing => `
         <li class="py-2.5 flex items-center justify-between text-sm">
           <span class="font-medium text-slate-800">${escapeHtml(ing.nome)}</span>
-          <span class="text-slate-500 font-semibold text-xs bg-white px-2.5 py-1 rounded-lg border border-slate-200">${escapeHtml(ing.qtd)}</span>
+          <span class="text-slate-500 font-semibold text-xs bg-white px-2.5 py-1 rounded-lg border border-slate-200">${escapeHtml(ing.qtd || ing.quantidade || '')}</span>
         </li>
       `).join('');
 
@@ -783,38 +663,6 @@ function doPost(e) {
       } else {
         linkContainer.classList.add('hidden');
       }
-    }
-
-    // --- CONFIGURAÇÃO APPS SCRIPT MODAL ---
-    function toggleScriptModal(show) {
-      const modal = document.getElementById('script-modal');
-      if (show) modal.classList.remove('hidden');
-      else modal.classList.add('hidden');
-    }
-
-    function saveScriptUrl() {
-      const url = document.getElementById('script-url-input').value.trim();
-      appsScriptUrl = url;
-      localStorage.setItem('appsScriptUrl', url);
-      updateDataSourceBanner(!!url);
-      toggleScriptModal(false);
-      fetchRecipes();
-    }
-
-    function updateDataSourceBanner(isSync) {
-      const text = document.getElementById('data-source-text');
-      if (isSync) {
-        text.innerText = "Sincronizado com o Google Apps Script & Planilha.";
-      } else {
-        text.innerText = "Modo Demonstrativo (Dados locais). Configure a URL do Apps Script para sincronizar com sua planilha.";
-      }
-    }
-
-    function copyAppsScriptCode() {
-      const code = document.getElementById('script-code-block').innerText;
-      navigator.clipboard.writeText(code).then(() => {
-        showToast('Código do Code.gs copiado para a área de transferência!');
-      });
     }
 
     // --- UTILITÁRIOS ---
@@ -843,7 +691,7 @@ function doPost(e) {
 
     function escapeHtml(str) {
       if (!str) return '';
-      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+      return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
     }
   </script>
 </body>
